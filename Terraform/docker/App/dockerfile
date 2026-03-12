@@ -1,0 +1,21 @@
+# node as base image
+FROM node:18-alpine
+
+# Working directory
+WORKDIR /app
+
+# Copy package.json 
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install --production
+
+
+
+COPY . .
+
+# Expose backend port
+EXPOSE 5000
+
+# Start the application
+CMD ["sh", "-c", "node index.js"]
