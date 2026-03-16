@@ -1,0 +1,5 @@
+FROM prom/cloudwatch-exporter:v0.16.0
+
+COPY config.yml /config/config.yml
+
+EXPOSE 9106

@@ -29,3 +29,11 @@ scrape_configs:
   relabel_configs:
     - source_labels: [__address__]
       target_label: instance
+
+- job_name: "cloudwatch-exporter"
+  metrics_path: /metrics
+  dns_sd_configs:
+    - names:
+        - cloudwatch-exporter.monitoring.local
+      type: A
+      port: 9106

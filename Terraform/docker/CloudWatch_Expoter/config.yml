@@ -1,0 +1,72 @@
+region: us-east-1
+
+metrics:
+
+- aws_namespace: AWS/ECS
+  aws_metric_name: CPUUtilization
+  aws_dimensions: [ClusterName, ServiceName]
+  aws_statistics: [Average]
+  period_seconds: 60
+  range_seconds: 300
+  set_timestamp: false
+
+- aws_namespace: AWS/ECS
+  aws_metric_name: MemoryUtilization
+  aws_dimensions: [ClusterName, ServiceName]
+  aws_statistics: [Average]
+  period_seconds: 60
+  range_seconds: 300
+  set_timestamp: false
+
+- aws_namespace: AWS/ECS
+  aws_metric_name: RunningTaskCount
+  aws_dimensions: [ClusterName, ServiceName]
+  aws_statistics: [Average]
+  period_seconds: 60
+  range_seconds: 300
+  set_timestamp: false
+
+# Load Balancer Metrics
+
+- aws_namespace: AWS/ApplicationELB
+  aws_metric_name: RequestCount
+  aws_dimensions: [LoadBalancer]
+  aws_statistics: [Sum]
+  period_seconds: 60
+  range_seconds: 300
+  set_timestamp: false
+
+- aws_namespace: AWS/ApplicationELB
+  aws_metric_name: TargetResponseTime
+  aws_dimensions: [LoadBalancer]
+  aws_statistics: [Average]
+  period_seconds: 60
+  range_seconds: 300
+  set_timestamp: false
+
+- aws_namespace: AWS/ApplicationELB
+  aws_metric_name: HTTPCode_Target_5XX_Count
+  aws_dimensions: [LoadBalancer]
+  aws_statistics: [Sum]
+  period_seconds: 60
+  range_seconds: 300
+  set_timestamp: false
+
+
+# TARGET GROUP HEALTH
+
+- aws_namespace: AWS/ApplicationELB
+  aws_metric_name: HealthyHostCount
+  aws_dimensions: [TargetGroup, LoadBalancer]
+  aws_statistics: [Average]
+  period_seconds: 60
+  range_seconds: 300
+  set_timestamp: false
+
+- aws_namespace: AWS/ApplicationELB
+  aws_metric_name: UnHealthyHostCount
+  aws_dimensions: [TargetGroup, LoadBalancer]
+  aws_statistics: [Average]
+  period_seconds: 60
+  range_seconds: 300
+  set_timestamp: false

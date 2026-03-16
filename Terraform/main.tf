@@ -143,8 +143,8 @@ resource "aws_security_group" "ecs-sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
-    from_port   = 9100
-    to_port     = 9100
+    from_port   = 9106
+    to_port     = 9106
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -257,7 +257,7 @@ resource "aws_ecs_cluster" "ecs-cluster" {
   name = "my-ecs-cluster"
   setting {
     name  = "containerInsights"
-    value = "enabled"
+    value = "enhanced"
   }
 }
 
@@ -447,8 +447,8 @@ resource "aws_ecs_task_definition" "prometheus-task" {
 
       memory = 1024,
       cpu    = 512,
-      log_configuration = {
-        log_driver = "awslogs"
+      logConfiguration = {
+        logDriver = "awslogs"
         options = {
           "awslogs-group"         = aws_cloudwatch_log_group.name.name
           "awslogs-region"        = "us-east-1"
@@ -541,8 +541,8 @@ resource "aws_ecs_task_definition" "grafana-task" {
         }
 
       ],
-      log_configuration = {
-        log_driver = "awslogs"
+      logConfiguration = {
+        logDriver = "awslogs"
         options = {
           "awslogs-group"         = aws_cloudwatch_log_group.name.name
           "awslogs-region"        = "us-east-1"
@@ -594,8 +594,8 @@ resource "aws_ecs_task_definition" "alertmanager-task" {
       ],
       memory = 1024,
       cpu    = 512,
-      log_configuration = {
-        log_driver = "awslogs"
+      logConfiguration = {
+        logDriver = "awslogs"
         options = {
           "awslogs-group"         = aws_cloudwatch_log_group.name.name
           "awslogs-region"        = "us-east-1"
@@ -632,5 +632,111 @@ resource "aws_ecs_service" "alertmanager-service" {
   service_registries {
 
     registry_arn = aws_service_discovery_service.alertmanager-sd.arn
+  }
+}
+
+
+# CloudWatch Exporter Setup
+
+resource "aws_iam_role" "cloudwatch-role" {
+  name = "cloudwatch-exporter-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+
+    Statement = [
+
+      {
+        Effect = "Allow"
+
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+
+        Action = "sts:AssumeRole"
+      }
+
+    ]
+
+  })
+}
+
+resource "aws_iam_role_policy" "cloudwatch-policy" {
+  role = aws_iam_role.cloudwatch-role.id
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "cloudwatch:GetMetricData",
+          "cloudwatch:ListMetrics",
+          "cloudwatch:GetMetricStatistics"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+resource "aws_ecs_task_definition" "cloudwatch-exporter-task" {
+  family                   = "my-cloudwatch-exporter-task"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "512"
+  memory                   = "1024"
+  execution_role_arn       = aws_iam_role.name.arn
+  task_role_arn            = aws_iam_role.cloudwatch-role.arn
+  container_definitions = jsonencode([
+    {
+      name      = "cloudwatch-exporter-container"
+      image     = aws_ecr_repository.cloudwatch-exporter-repo.repository_url
+      essential = true
+      portMappings = [
+        {
+          containerPort = 9106
+          hostPort      = 9106
+        }
+      ],
+      memory = 1024,
+      cpu    = 512,
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.name.name
+          "awslogs-region"        = "us-east-1"
+          "awslogs-stream-prefix" = "cloudwatch-exporter"
+        }
+      }
+    }
+  ])
+}
+
+# Service Discovery for CloudWatch Exporter
+
+resource "aws_service_discovery_service" "cloudwatch-exporter-sd" {
+  name = "cloudwatch-exporter"
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.name.id
+    dns_records {
+      type = "A"
+      ttl  = 10
+    }
+    routing_policy = "MULTIVALUE"
+  }
+}
+resource "aws_ecs_service" "cloudwatch-exporter" {
+  name            = "CloudWatch-Exporter"
+  cluster         = aws_ecs_cluster.ecs-cluster.id
+  task_definition = aws_ecs_task_definition.cloudwatch-exporter-task.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+  network_configuration {
+    subnets          = [aws_subnet.private-subnet.id]
+    security_groups  = [aws_security_group.ecs-sg.id]
+    assign_public_ip = true
+  }
+
+  service_registries {
+
+    registry_arn = aws_service_discovery_service.cloudwatch-exporter-sd.arn
   }
 }
