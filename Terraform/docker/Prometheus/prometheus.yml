@@ -35,5 +35,5 @@ scrape_configs:
   dns_sd_configs:
     - names:
         - cloudwatch-exporter.monitoring.local
-      type: A
+      type: "A"
       port: 9106

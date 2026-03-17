@@ -6,7 +6,7 @@
 
 4. The main challenge is with sending infra metrics from cloudwatch to prometheus.. the metrics went fine but was unable to query them becuase the cloudwatch exporter is sending the metrics with timestamps in milliseconds but the prometheus want it in seconds.. as as there is diff in time the data is not stored in TSDB..
 
-5. So I disabled the timestamos while sending the metrics. so the prblm got solved..
+5. So I disabled the timestamps while sending the metrics. so the prblm got solved..
 
 CMDS:
 

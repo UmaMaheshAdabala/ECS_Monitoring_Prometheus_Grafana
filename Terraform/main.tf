@@ -480,7 +480,7 @@ resource "aws_ecs_service" "prometheus-service" {
   enable_execute_command = true
 }
 
-# Service Discovery setup for Prometheus
+# Service Discovery setup for App Service
 
 resource "aws_service_discovery_private_dns_namespace" "name" {
   name = "monitoring.local"

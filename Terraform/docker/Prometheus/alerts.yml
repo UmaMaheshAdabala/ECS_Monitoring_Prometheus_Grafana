@@ -31,13 +31,12 @@ groups:
 
   - name: infrastructure-alerts
     rules:
-
-      - alert: HighCPUUsage
+      - alert: ECSHighCPUUsage
         expr: |
-          100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[1m])) * 100) > 80
+          aws_ecs_cpuutilization_average{cluster_name="my-ecs-cluster"} > 80
         for: 2m
         labels:
           severity: critical
         annotations:
-          summary: "High CPU Usage"
-          description: "CPU usage above 80% for 2 minutes."
+          summary: "High ECS CPU Usage"
+          description: "CPU utilization above 80% for ECS service {{ $labels.service_name }} in cluster {{ $labels.cluster_name }} for 2 minutes."
